@@ -1,7 +1,7 @@
 // logolang is a simple and thread-safe package for logging operations.
 //
-// It consists in a Logger where you can configure a log level and a writer for each of those log levels.
-// Those log levels are:
+// It consists in a Logger object where you can configure a writer for each log level.
+// There are 5 of those levels:
 //
 // - 0: no log
 //
