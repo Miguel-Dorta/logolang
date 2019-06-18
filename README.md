@@ -18,12 +18,8 @@ import (
 )
 
 func main() {
-	log, err := logolang.NewLogger(os.Stdout, os.Stdout, os.Stderr, os.Stderr)
-	if err != nil {
-		panic(err)
-	}
-
-	if err = log.SetLevel(4); err != nil {
+	log := logolang.NewLogger(nil, nil, nil, nil)
+	if err := log.SetLevel(4); err != nil {
 		panic(err)
 	}
 	

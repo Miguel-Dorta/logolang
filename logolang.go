@@ -1,4 +1,4 @@
-// logolang is a simple and thread-safe package for logging operations.
+// Package logolang is a simple and thread-safe package for logging operations.
 //
 // It consists in a Logger object where you can configure a writer for each log level.
 // There are 5 of those levels:
@@ -18,11 +18,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"sync"
 	"time"
 )
 
 const (
+	// ANSI escape sequences
 	colorDefault = "\x1b[39m"
 	colorLightBlue = "\x1b[94m"
 	colorRed = "\x1b[31m"
@@ -38,17 +40,40 @@ type Logger struct {
 	mutex sync.Mutex
 }
 
-// NewLogger creates a new Logger object
-func NewLogger(debug, info, error, critical io.Writer) (*Logger, error) {
-	if debug == nil || info == nil || error == nil || critical == nil {
-		return nil, errors.New("not all interfaces are defined")
+// NewLogger creates a new Logger object.
+// It will write the log in the writers provided.
+// If one of the writers is set to nil, it will be set to its default value.
+//
+// Default values:
+//
+// - debug: os.Stdout
+//
+// - info: os.Stdout
+//
+// - error: os.Stderr
+//
+// - critical: os.Stderr
+func NewLogger(debug, info, error, critical io.Writer) *Logger {
+	l := Logger{
+		debug:    os.Stdout,
+		info:     os.Stdout,
+		error:    os.Stderr,
+		critical: os.Stderr,
 	}
-	return &Logger{
-		debug:    debug,
-		info:     info,
-		error:    error,
-		critical: critical,
-	}, nil
+
+	if debug != nil {
+		l.debug = debug
+	}
+	if info != nil {
+		l.info = info
+	}
+	if error != nil {
+		l.error = error
+	}
+	if critical != nil {
+		l.critical = critical
+	}
+	return &l
 }
 
 // SetLevel sets the logger level to the value given
