@@ -1,5 +1,5 @@
 # logolang
-logolang is a simple and thread-safe package for logging operations.
+Package logolang is a simple and thread-safe library for logging operations.
 
 It consists in a Logger object where you can configure a writer for each log level. There are 5 of those levels:
 - 0: no log
