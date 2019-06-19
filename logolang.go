@@ -24,6 +24,19 @@ import (
 )
 
 const (
+	// Logger levels
+	LevelNoLog = iota
+	LevelCritical
+	LevelError
+	LevelInfo
+	LevelDebug
+
+	// Level names
+	nameCritical = "CRITICAL"
+	nameError = "ERROR"
+	nameInfo = "INFO"
+	nameDebug = "DEBUG"
+
 	// ANSI escape sequences
 	colorDefault = "\x1b[39m"
 	colorLightBlue = "\x1b[94m"
@@ -78,7 +91,7 @@ func NewLogger(debug, info, error, critical io.Writer) *Logger {
 
 // SetLevel sets the logger level to the value given
 func (l *Logger) SetLevel(level int) error {
-	if level < 0 || level > 4 {
+	if level < LevelNoLog || level > LevelDebug {
 		return errors.New("invalid value")
 	}
 	l.mutex.Lock()
@@ -87,48 +100,96 @@ func (l *Logger) SetLevel(level int) error {
 	return nil
 }
 
-// Critical logs a critical message in the critical interface when the logger level is 1 or greater
+// Critical logs a critical message in the critical interface when logger level >= LevelCritical.
 func (l *Logger) Critical(message string) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
-	if l.level < 1 {
+	if l.level < LevelCritical {
 		return
 	}
-	l.log(l.critical, "CRITICAL", colorRed, message)
+	l.log(l.critical, nameCritical, colorRed, message)
 }
 
-// Error logs an error message in the error interface when the logger level is 2 or greater
+// Criticalf logs a critical message in the critical interface when logger level >= LevelCritical.
+// Arguments are handled in the manner of fmt.Printf.
+func (l *Logger) Criticalf(format string, v ...interface{}) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	if l.level < LevelCritical {
+		return
+	}
+	l.log(l.critical, "CRITICAL", colorRed, fmt.Sprintf(format, v...))
+}
+
+// Error logs an error message in the error interface when logger level >= LevelError.
 func (l *Logger) Error(message string) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
-	if l.level < 2 {
+	if l.level < LevelError {
 		return
 	}
-	l.log(l.error, "ERROR", colorYellow, message)
+	l.log(l.error, nameError, colorYellow, message)
 }
 
-// Info logs an info message in the info interface when the logger level is 3 or greater
+// Error logs an error message in the error interface when logger level >= LevelError.
+// Arguments are handled in the manner of fmt.Printf.
+func (l *Logger) Errorf(format string, v ...interface{}) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	if l.level < LevelError {
+		return
+	}
+	l.log(l.error, nameError, colorYellow, fmt.Sprintf(format, v...))
+}
+
+// Info logs an info message in the info interface when logger level >= LevelInfo.
 func (l *Logger) Info(message string) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
-	if l.level < 3 {
+	if l.level < LevelInfo {
 		return
 	}
-	l.log(l.info, "INFO", colorDefault, message)
+	l.log(l.info, nameInfo, colorDefault, message)
 }
 
-// Debug logs a debug message in the debug interface when the logger level is 4 or greater
+// Info logs an info message in the info interface when logger level >= LevelInfo.
+// Arguments are handled in the manner of fmt.Printf.
+func (l *Logger) Infof(format string, v ...interface{}) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	if l.level < LevelInfo {
+		return
+	}
+	l.log(l.info, nameInfo, colorDefault, fmt.Sprintf(format, v...))
+}
+
+// Debug logs a debug message in the debug interface when logger level >= LevelDebug.
 func (l *Logger) Debug(message string) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
-	if l.level < 4 {
+	if l.level < LevelDebug {
 		return
 	}
-	l.log(l.debug, "DEBUG", colorLightBlue, message)
+	l.log(l.debug, nameDebug, colorLightBlue, message)
+}
+
+// Debug logs a debug message in the debug interface when logger level >= LevelDebug.
+// Arguments are handled in the manner of fmt.Printf.
+func (l *Logger) Debugf(format string, v ...interface{}) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	if l.level < LevelDebug {
+		return
+	}
+	l.log(l.debug, nameDebug, colorLightBlue, fmt.Sprintf(format, v...))
 }
 
 // log is the internal function for logging messages
