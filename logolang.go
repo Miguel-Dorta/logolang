@@ -120,7 +120,7 @@ func (l *Logger) Criticalf(format string, v ...interface{}) {
 	if l.level < LevelCritical {
 		return
 	}
-	l.log(l.critical, "CRITICAL", colorRed, fmt.Sprintf(format, v...))
+	l.log(l.critical, nameCritical, colorRed, fmt.Sprintf(format, v...))
 }
 
 // Error logs an error message in the error interface when logger level >= LevelError.
