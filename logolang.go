@@ -53,6 +53,22 @@ type Logger struct {
 	mutex sync.RWMutex
 }
 
+// NewStandardLogger creates a new logger with the default values.
+//
+// The default values for the writers are the same that the ones defined in NewLogger.
+// The default value for level is LevelError.
+// The default value for format is DefaultFormat
+func NewStandardLogger() *Logger {
+	return &Logger{
+		level:    LevelError,
+		format:   DefaultFormat,
+		debug:    os.Stdout,
+		info:     os.Stdout,
+		error:    os.Stderr,
+		critical: os.Stderr,
+	}
+}
+
 // NewLogger creates a new Logger object.
 // It will write the log in the writers provided.
 // If one of the writers is set to nil, it will be set to its default value.
