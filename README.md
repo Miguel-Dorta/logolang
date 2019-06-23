@@ -12,14 +12,11 @@ Example:
 ```go
 package main
 
-import (
-	"github.com/Miguel-Dorta/logolang"
-	"os"
-)
+import "github.com/Miguel-Dorta/logolang"
 
 func main() {
-	log := logolang.NewLogger(nil, nil, nil, nil)
-	if err := log.SetLevel(4); err != nil {
+	log := logolang.NewStandardLogger()
+	if err := log.SetLevel(logolang.LevelDebug); err != nil {
 		panic(err)
 	}
 	
