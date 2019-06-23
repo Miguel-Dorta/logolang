@@ -50,7 +50,7 @@ const (
 type Logger struct {
 	level int
 	debug, info, error, critical io.Writer
-	mutex sync.Mutex
+	mutex sync.RWMutex
 }
 
 // NewLogger creates a new Logger object.
@@ -102,10 +102,7 @@ func (l *Logger) SetLevel(level int) error {
 
 // Critical logs a critical message in the critical interface when logger level >= LevelCritical.
 func (l *Logger) Critical(message string) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.level < LevelCritical {
+	if l.getLevel() < LevelCritical {
 		return
 	}
 	l.log(l.critical, nameCritical, colorRed, message)
@@ -114,10 +111,7 @@ func (l *Logger) Critical(message string) {
 // Criticalf logs a critical message in the critical interface when logger level >= LevelCritical.
 // Arguments are handled in the manner of fmt.Printf.
 func (l *Logger) Criticalf(format string, v ...interface{}) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.level < LevelCritical {
+	if l.getLevel() < LevelCritical {
 		return
 	}
 	l.log(l.critical, nameCritical, colorRed, fmt.Sprintf(format, v...))
@@ -125,10 +119,7 @@ func (l *Logger) Criticalf(format string, v ...interface{}) {
 
 // Error logs an error message in the error interface when logger level >= LevelError.
 func (l *Logger) Error(message string) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.level < LevelError {
+	if l.getLevel() < LevelError {
 		return
 	}
 	l.log(l.error, nameError, colorYellow, message)
@@ -137,10 +128,7 @@ func (l *Logger) Error(message string) {
 // Error logs an error message in the error interface when logger level >= LevelError.
 // Arguments are handled in the manner of fmt.Printf.
 func (l *Logger) Errorf(format string, v ...interface{}) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.level < LevelError {
+	if l.getLevel() < LevelError {
 		return
 	}
 	l.log(l.error, nameError, colorYellow, fmt.Sprintf(format, v...))
@@ -148,10 +136,7 @@ func (l *Logger) Errorf(format string, v ...interface{}) {
 
 // Info logs an info message in the info interface when logger level >= LevelInfo.
 func (l *Logger) Info(message string) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.level < LevelInfo {
+	if l.getLevel() < LevelInfo {
 		return
 	}
 	l.log(l.info, nameInfo, colorDefault, message)
@@ -160,10 +145,7 @@ func (l *Logger) Info(message string) {
 // Info logs an info message in the info interface when logger level >= LevelInfo.
 // Arguments are handled in the manner of fmt.Printf.
 func (l *Logger) Infof(format string, v ...interface{}) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.level < LevelInfo {
+	if l.getLevel() < LevelInfo {
 		return
 	}
 	l.log(l.info, nameInfo, colorDefault, fmt.Sprintf(format, v...))
@@ -171,10 +153,7 @@ func (l *Logger) Infof(format string, v ...interface{}) {
 
 // Debug logs a debug message in the debug interface when logger level >= LevelDebug.
 func (l *Logger) Debug(message string) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.level < LevelDebug {
+	if l.getLevel() < LevelDebug {
 		return
 	}
 	l.log(l.debug, nameDebug, colorLightBlue, message)
@@ -183,10 +162,7 @@ func (l *Logger) Debug(message string) {
 // Debug logs a debug message in the debug interface when logger level >= LevelDebug.
 // Arguments are handled in the manner of fmt.Printf.
 func (l *Logger) Debugf(format string, v ...interface{}) {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	if l.level < LevelDebug {
+	if l.getLevel() < LevelDebug {
 		return
 	}
 	l.log(l.debug, nameDebug, colorLightBlue, fmt.Sprintf(format, v...))
@@ -195,6 +171,9 @@ func (l *Logger) Debugf(format string, v ...interface{}) {
 // log is the internal function for logging messages
 func (l *Logger) log(w io.Writer, levelName, levelColor, message string) {
 	now := time.Now()
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
 	_, err := fmt.Fprintf(w, "[%04d-%02d-%02d %02d:%02d:%02d] %s%s%s: %s\n",
 		now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(),
 		levelColor, levelName, colorDefault, message,
@@ -202,4 +181,10 @@ func (l *Logger) log(w io.Writer, levelName, levelColor, message string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (l *Logger) getLevel() int {
+	l.mutex.RLock()
+	defer l.mutex.RUnlock()
+	return l.level
 }
