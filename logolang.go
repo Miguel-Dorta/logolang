@@ -72,6 +72,7 @@ func NewLogger(debug, info, error, critical io.Writer) *Logger {
 		info:     os.Stdout,
 		error:    os.Stderr,
 		critical: os.Stderr,
+		format: DefaultFormat,
 	}
 
 	if debug != nil {
