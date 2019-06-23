@@ -20,7 +20,6 @@ import (
 	"io"
 	"os"
 	"sync"
-	"time"
 )
 
 const (
@@ -49,6 +48,7 @@ const (
 // Every logging operation results in panic if there's an error when writing to one of those interfaces.
 type Logger struct {
 	level int
+	format string
 	debug, info, error, critical io.Writer
 	mutex sync.RWMutex
 }
@@ -89,7 +89,7 @@ func NewLogger(debug, info, error, critical io.Writer) *Logger {
 	return &l
 }
 
-// SetLevel sets the logger level to the value given
+// SetLevel sets the logger level to the value given.
 func (l *Logger) SetLevel(level int) error {
 	if level < LevelNoLog || level > LevelDebug {
 		return errors.New("invalid value")
@@ -98,6 +98,30 @@ func (l *Logger) SetLevel(level int) error {
 	l.level = level
 	l.mutex.Unlock()
 	return nil
+}
+
+// SetFormat let you set the format for the logger output.
+// The format is defined by a string where the following sequences are given the following values:
+//
+//		%YYYY%    = current year
+//		%MM%      = current month
+//		%DD%      = current day of the month
+//		%hh%      = current hour
+//		%mm%      = current minute
+//		%ss%      = current second
+//		%ns%      = current nanosecond
+//		%LEVEL%   = level name (DEBUG, INFO, ERROR or CRITICAL)
+//		%MESSAGE% = message logged
+//
+// The default format is:
+//		DefaultFormat  = "[%YYYY%-%MM%-%DD% %hh%:%mm%:%ss%] %LEVEL%: %MESSAGE%"
+func (l *Logger) SetFormat(format string) {
+	if format == "" {
+		format = DefaultFormat
+	}
+	l.mutex.Lock()
+	l.format = format
+	l.mutex.Unlock()
 }
 
 // Critical logs a critical message in the critical interface when logger level >= LevelCritical.
@@ -170,14 +194,12 @@ func (l *Logger) Debugf(format string, v ...interface{}) {
 
 // log is the internal function for logging messages
 func (l *Logger) log(w io.Writer, levelName, levelColor, message string) {
-	now := time.Now()
+	formattedMsg := format(l.format, fmt.Sprintf("%s%s%s", levelColor, levelName, colorDefault), message)
+
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
-	_, err := fmt.Fprintf(w, "[%04d-%02d-%02d %02d:%02d:%02d] %s%s%s: %s\n",
-		now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(),
-		levelColor, levelName, colorDefault, message,
-	)
+	_, err := fmt.Fprintln(w, formattedMsg)
 	if err != nil {
 		panic(err)
 	}
