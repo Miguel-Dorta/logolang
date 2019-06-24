@@ -48,7 +48,8 @@ const (
 // Every logging operation results in panic if there's an error when writing to one of those interfaces.
 type Logger struct {
 	level int
-	format string
+	color bool
+	format *formatter
 	debug, info, error, critical io.Writer
 	mutex sync.RWMutex
 }
@@ -64,7 +65,7 @@ func NewLoggerStandard() *Logger {
 
 	return &Logger{
 		level:    LevelError,
-		format:   DefaultFormat,
+		format:   newFormatter(DefaultFormat),
 		debug:    stdout,
 		info:     stdout,
 		error:    stderr,
@@ -134,7 +135,7 @@ func (l *Logger) SetFormat(format string) {
 		format = DefaultFormat
 	}
 	l.mutex.Lock()
-	l.format = format
+	l.format = newFormatter(format)
 	l.mutex.Unlock()
 }
 
@@ -208,7 +209,7 @@ func (l *Logger) Debugf(format string, v ...interface{}) {
 
 // log is the internal function for logging messages
 func (l *Logger) log(w io.Writer, levelName, levelColor, message string) {
-	formattedMsg := format(l.getFormat(), fmt.Sprintf("%s%s%s", levelColor, levelName, colorDefault), message)
+	formattedMsg := l.getFormat().format(fmt.Sprintf("%s%s%s", levelColor, levelName, colorDefault), message)
 
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
@@ -225,7 +226,7 @@ func (l *Logger) getLevel() int {
 	return l.level
 }
 
-func (l *Logger) getFormat() string {
+func (l *Logger) getFormat() *formatter {
 	l.mutex.RLock()
 	defer l.mutex.RUnlock()
 	return l.format

@@ -7,6 +7,9 @@ import (
 )
 
 const (
+	// Default format for logolang
+	DefaultFormat  = "[%YYYY%-%MM%-%DD% %hh%:%mm%:%ss%] %LEVEL%: %MESSAGE%"
+
 	// CheatSheet for parsing format
 	escapeChar         = "%"
 	sequenceYear       = "YYYY"
@@ -18,61 +21,92 @@ const (
 	sequenceNanosecond = "ns"
 	sequenceLevel      = "LEVEL"
 	sequenceMessage    = "MESSAGE"
-
-	// Default format for logolang
-	DefaultFormat  = "[%YYYY%-%MM%-%DD% %hh%:%mm%:%ss%] %LEVEL%: %MESSAGE%"
 )
 
-func format(format, level, msg string) string {
-	now := time.Now()
+type formatter struct {
+	formattedString string
+	sequences []string
+}
 
+func newFormatter(format string) *formatter {
 	parts := strings.Split(format, escapeChar)
 
-	var sb strings.Builder; sb.Grow(50)
-	v := make([]interface{}, 0, 8)
+	var sb strings.Builder; sb.Grow(128)
+	sequences := make([]string, 0, 16)
 
 	for _, p := range parts {
-		var toAppendFormat string
-		var toAppendV interface{}
+		var toAppendBuilder, toAppendSequences string
 
 		switch p {
 		case sequenceYear:
-			toAppendFormat = "%04d"
-			toAppendV = now.Year()
+			toAppendBuilder = "%04d"
+			toAppendSequences = sequenceYear
 		case sequenceMonth:
-			toAppendFormat = "%02d"
-			toAppendV = now.Month()
+			toAppendBuilder = "%02d"
+			toAppendSequences = sequenceMonth
 		case sequenceDay:
-			toAppendFormat = "%02d"
-			toAppendV = now.Day()
+			toAppendBuilder = "%02d"
+			toAppendSequences = sequenceDay
 		case sequenceHour:
-			toAppendFormat = "%02d"
-			toAppendV = now.Hour()
+			toAppendBuilder = "%02d"
+			toAppendSequences = sequenceHour
 		case sequenceMinute:
-			toAppendFormat = "%02d"
-			toAppendV = now.Minute()
+			toAppendBuilder = "%02d"
+			toAppendSequences = sequenceMinute
 		case sequenceSecond:
-			toAppendFormat = "%02d"
-			toAppendV = now.Second()
+			toAppendBuilder = "%02d"
+			toAppendSequences = sequenceSecond
 		case sequenceNanosecond:
-			toAppendFormat = "%09d"
-			toAppendV = now.Nanosecond()
+			toAppendBuilder = "%09d"
+			toAppendSequences = sequenceNanosecond
 		case sequenceLevel:
-			toAppendFormat = "%s"
-			toAppendV = level
+			toAppendBuilder = "%s"
+			toAppendSequences = sequenceLevel
 		case sequenceMessage:
-			toAppendFormat = "%s"
-			toAppendV = msg
+			toAppendBuilder = "%s"
+			toAppendSequences = sequenceMessage
 		default:
-			toAppendFormat = "%s"
-			toAppendV = nil
+			toAppendBuilder = p
 		}
 
-		sb.WriteString(toAppendFormat)
-		if toAppendV != nil {
-			v = append(v, toAppendV)
+		sb.WriteString(toAppendBuilder)
+		if toAppendSequences != "" {
+			sequences = append(sequences, toAppendSequences)
 		}
 	}
 
-	return fmt.Sprintf(sb.String(), v...)
+	return &formatter{
+		formattedString: sb.String(),
+		sequences: sequences,
+	}
+}
+
+func (f *formatter) format(level, msg string) string {
+	now := time.Now()
+
+	v := make([]interface{}, len(f.sequences))
+	for i, seq := range f.sequences {
+		switch seq {
+		case sequenceYear:
+			v[i] = now.Year()
+		case sequenceMonth:
+			v[i] = now.Month()
+		case sequenceDay:
+			v[i] = now.Day()
+		case sequenceHour:
+			v[i] = now.Hour()
+		case sequenceMinute:
+			v[i] = now.Minute()
+		case sequenceSecond:
+			v[i] = now.Second()
+		case sequenceNanosecond:
+			v[i] = now.Nanosecond()
+		case sequenceLevel:
+			v[i] = level
+		case sequenceMessage:
+			v[i] = msg
+		}
+	}
+
+	return fmt.Sprintf(f.formattedString, v...)
 }
