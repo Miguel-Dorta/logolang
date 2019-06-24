@@ -59,13 +59,16 @@ type Logger struct {
 // The default value for level is LevelError.
 // The default value for format is DefaultFormat
 func NewStandardLogger() *Logger {
+	stdout := NewSafeWriter(os.Stdout)
+	stderr := NewSafeWriter(os.Stderr)
+
 	return &Logger{
 		level:    LevelError,
 		format:   DefaultFormat,
-		debug:    os.Stdout,
-		info:     os.Stdout,
-		error:    os.Stderr,
-		critical: os.Stderr,
+		debug:    stdout,
+		info:     stdout,
+		error:    stderr,
+		critical: stderr,
 	}
 }
 
@@ -83,13 +86,7 @@ func NewStandardLogger() *Logger {
 //
 // - critical: os.Stderr
 func NewLogger(debug, info, error, critical io.Writer) *Logger {
-	l := Logger{
-		debug:    os.Stdout,
-		info:     os.Stdout,
-		error:    os.Stderr,
-		critical: os.Stderr,
-		format: DefaultFormat,
-	}
+	l := NewStandardLogger()
 
 	if debug != nil {
 		l.debug = debug
@@ -103,7 +100,7 @@ func NewLogger(debug, info, error, critical io.Writer) *Logger {
 	if critical != nil {
 		l.critical = critical
 	}
-	return &l
+	return l
 }
 
 // SetLevel sets the logger level to the value given.
@@ -216,7 +213,7 @@ func (l *Logger) log(w io.Writer, levelName, levelColor, message string) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
-	_, err := fmt.Fprintln(w, formattedMsg)
+	_, err := io.WriteString(w, formattedMsg)
 	if err != nil {
 		panic(err)
 	}
