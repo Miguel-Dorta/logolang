@@ -208,7 +208,7 @@ func (l *Logger) Debugf(format string, v ...interface{}) {
 
 // log is the internal function for logging messages
 func (l *Logger) log(w io.Writer, levelName, levelColor, message string) {
-	formattedMsg := format(l.format, fmt.Sprintf("%s%s%s", levelColor, levelName, colorDefault), message)
+	formattedMsg := format(l.getFormat(), fmt.Sprintf("%s%s%s", levelColor, levelName, colorDefault), message)
 
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
@@ -223,4 +223,10 @@ func (l *Logger) getLevel() int {
 	l.mutex.RLock()
 	defer l.mutex.RUnlock()
 	return l.level
+}
+
+func (l *Logger) getFormat() string {
+	l.mutex.RLock()
+	defer l.mutex.RUnlock()
+	return l.format
 }
