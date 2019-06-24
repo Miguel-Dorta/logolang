@@ -53,12 +53,12 @@ type Logger struct {
 	mutex sync.RWMutex
 }
 
-// NewStandardLogger creates a new logger with the default values.
+// NewLoggerStandard creates a new logger with the default values.
 //
 // The default values for the writers are the same that the ones defined in NewLogger.
 // The default value for level is LevelError.
 // The default value for format is DefaultFormat
-func NewStandardLogger() *Logger {
+func NewLoggerStandard() *Logger {
 	stdout := NewSafeWriter(os.Stdout)
 	stderr := NewSafeWriter(os.Stderr)
 
@@ -86,7 +86,7 @@ func NewStandardLogger() *Logger {
 //
 // - critical: os.Stderr
 func NewLogger(debug, info, error, critical io.Writer) *Logger {
-	l := NewStandardLogger()
+	l := NewLoggerStandard()
 
 	if debug != nil {
 		l.debug = debug
