@@ -5,17 +5,15 @@ import (
 	"sync"
 )
 
+// SafeWriter is a simple wrapper for making a writer safe for concurrent access.
 type SafeWriter struct {
-	w io.Writer
+	W io.Writer
 	mutex sync.Mutex
 }
 
-func NewSafeWriter(w io.Writer) io.Writer {
-	return &SafeWriter{w: w}
-}
-
+// Write follows the implementation of the io.Writer interface.
 func (sf *SafeWriter) Write(p []byte) (n int, err error) {
 	sf.mutex.Lock()
 	defer sf.mutex.Unlock()
-	return sf.w.Write(p)
+	return sf.W.Write(p)
 }

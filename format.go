@@ -23,11 +23,14 @@ const (
 	sequenceMessage    = "MESSAGE"
 )
 
+// formatter is the type where a pre-formatted string and the
+// pre-read sequences are stored for formatting the log output.
 type formatter struct {
 	formattedString string
 	sequences []string
 }
 
+// newFormatter creates a formatter object from the string provided following the package specification.
 func newFormatter(format string) *formatter {
 	parts := strings.Split(format, escapeChar)
 
@@ -81,6 +84,7 @@ func newFormatter(format string) *formatter {
 	}
 }
 
+// format will create a string using the level and msg provided using the formatter's data.
 func (f *formatter) format(level, msg string) string {
 	now := time.Now()
 

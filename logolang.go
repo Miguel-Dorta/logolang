@@ -1,17 +1,3 @@
-// Package logolang is a simple and thread-safe library for logging operations.
-//
-// It consists in a Logger object where you can configure a writer for each log level.
-// There are 5 of those levels:
-//
-// - 0: no log
-//
-// - 1: critical
-//
-// - 2: error
-//
-// - 3: info
-//
-// - 4: debug
 package logolang
 
 import (
@@ -19,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
 )
 
 const (
@@ -43,105 +28,86 @@ const (
 	colorYellow = "\x1b[33m"
 )
 
-// Logger is the type used by logolang to perform logging operations.
-// It have 4 writers, one for each logging level except 0 (no log).
-// Every logging operation results in panic if there's an error when writing to one of those interfaces.
+// Logger is the type used by logolang to perform logging operations. .
 type Logger struct {
-	level int
 	color bool
 	format *formatter
+	level int
 	debug, info, error, critical io.Writer
-	mutex sync.RWMutex
 }
 
 // NewLoggerStandard creates a new logger with the default values.
 //
-// The default values for the writers are the same that the ones defined in NewLogger.
-// The default value for level is LevelError.
-// The default value for format is DefaultFormat
+// The default values are:
+//		color:    true
+//		format:   DefaultFormat
+//		level:    LevelError
+//		debug:    os.Stdout
+//		info:     os.Stdout
+//		error:    os.Stderr
+//		critical: os.Stderr
 func NewLoggerStandard() *Logger {
-	stdout := NewSafeWriter(os.Stdout)
-	stderr := NewSafeWriter(os.Stderr)
-
-	return &Logger{
-		level:    LevelError,
-		format:   newFormatter(DefaultFormat),
-		debug:    stdout,
-		info:     stdout,
-		error:    stderr,
-		critical: stderr,
-	}
-}
-
-// NewLogger creates a new Logger object.
-// It will write the log in the writers provided.
-// If one of the writers is set to nil, it will be set to its default value.
-//
-// Default values:
-//
-// - debug: os.Stdout
-//
-// - info: os.Stdout
-//
-// - error: os.Stderr
-//
-// - critical: os.Stderr
-func NewLogger(debug, info, error, critical io.Writer) *Logger {
-	l := NewLoggerStandard()
-
-	if debug != nil {
-		l.debug = debug
-	}
-	if info != nil {
-		l.info = info
-	}
-	if error != nil {
-		l.error = error
-	}
-	if critical != nil {
-		l.critical = critical
-	}
+	l, _ := NewLogger(true, "", LevelError, nil, nil, nil, nil)
 	return l
 }
 
-// SetLevel sets the logger level to the value given.
-func (l *Logger) SetLevel(level int) error {
+// NewLogger creates a new Logger object.
+// It's the function that lets you define every aspect of the new logger.
+// It lets you define whether you want the output to be printed with colors,
+// the format you want the messages to be logged, the logger level,
+// and the writers where you want to print your log.
+//
+// If the format provided is a empty string, it will be set to DefaultFormat.
+// If any of the writers provided is nil, it will be assigned to its default value.
+//
+// Default values:
+//		debug:    os.Stdout
+//		info:     os.Stdout
+//		error:    os.Stderr
+//		critical: os.Stderr
+func NewLogger(color bool, format string, level int, debug, info, error, critical io.Writer) (*Logger, error) {
+	// Check level
 	if level < LevelNoLog || level > LevelDebug {
-		return errors.New("invalid value")
+		return nil, errors.New("invalid level")
 	}
-	l.mutex.Lock()
-	l.level = level
-	l.mutex.Unlock()
-	return nil
-}
 
-// SetFormat let you set the format for the logger output.
-// The format is defined by a string where the following sequences are given the following values:
-//
-//		%YYYY%    = current year
-//		%MM%      = current month
-//		%DD%      = current day of the month
-//		%hh%      = current hour
-//		%mm%      = current minute
-//		%ss%      = current second
-//		%ns%      = current nanosecond
-//		%LEVEL%   = level name (DEBUG, INFO, ERROR or CRITICAL)
-//		%MESSAGE% = message logged
-//
-// The default format is:
-//		DefaultFormat  = "[%YYYY%-%MM%-%DD% %hh%:%mm%:%ss%] %LEVEL%: %MESSAGE%"
-func (l *Logger) SetFormat(format string) {
+	// Check format
 	if format == "" {
 		format = DefaultFormat
 	}
-	l.mutex.Lock()
-	l.format = newFormatter(format)
-	l.mutex.Unlock()
+
+	// Check writers
+	stdout := &SafeWriter{W: os.Stdout}
+	stderr := &SafeWriter{W: os.Stderr}
+
+	if debug == nil {
+		debug = stdout
+	}
+	if info == nil {
+		info = stdout
+	}
+	if error == nil {
+		error = stderr
+	}
+	if critical == nil {
+		critical = stderr
+	}
+
+	// Create and return logger
+	return &Logger{
+		color: color,
+		format: newFormatter(format),
+		level: level,
+		debug: debug,
+		info: info,
+		error: error,
+		critical: critical,
+	}, nil
 }
 
 // Critical logs a critical message in the critical interface when logger level >= LevelCritical.
 func (l *Logger) Critical(message string) {
-	if l.getLevel() < LevelCritical {
+	if l.level < LevelCritical {
 		return
 	}
 	l.log(l.critical, nameCritical, colorRed, message)
@@ -150,7 +116,7 @@ func (l *Logger) Critical(message string) {
 // Criticalf logs a critical message in the critical interface when logger level >= LevelCritical.
 // Arguments are handled in the manner of fmt.Printf.
 func (l *Logger) Criticalf(format string, v ...interface{}) {
-	if l.getLevel() < LevelCritical {
+	if l.level < LevelCritical {
 		return
 	}
 	l.log(l.critical, nameCritical, colorRed, fmt.Sprintf(format, v...))
@@ -158,7 +124,7 @@ func (l *Logger) Criticalf(format string, v ...interface{}) {
 
 // Error logs an error message in the error interface when logger level >= LevelError.
 func (l *Logger) Error(message string) {
-	if l.getLevel() < LevelError {
+	if l.level < LevelError {
 		return
 	}
 	l.log(l.error, nameError, colorYellow, message)
@@ -167,7 +133,7 @@ func (l *Logger) Error(message string) {
 // Error logs an error message in the error interface when logger level >= LevelError.
 // Arguments are handled in the manner of fmt.Printf.
 func (l *Logger) Errorf(format string, v ...interface{}) {
-	if l.getLevel() < LevelError {
+	if l.level < LevelError {
 		return
 	}
 	l.log(l.error, nameError, colorYellow, fmt.Sprintf(format, v...))
@@ -175,7 +141,7 @@ func (l *Logger) Errorf(format string, v ...interface{}) {
 
 // Info logs an info message in the info interface when logger level >= LevelInfo.
 func (l *Logger) Info(message string) {
-	if l.getLevel() < LevelInfo {
+	if l.level < LevelInfo {
 		return
 	}
 	l.log(l.info, nameInfo, colorDefault, message)
@@ -184,7 +150,7 @@ func (l *Logger) Info(message string) {
 // Info logs an info message in the info interface when logger level >= LevelInfo.
 // Arguments are handled in the manner of fmt.Printf.
 func (l *Logger) Infof(format string, v ...interface{}) {
-	if l.getLevel() < LevelInfo {
+	if l.level < LevelInfo {
 		return
 	}
 	l.log(l.info, nameInfo, colorDefault, fmt.Sprintf(format, v...))
@@ -192,7 +158,7 @@ func (l *Logger) Infof(format string, v ...interface{}) {
 
 // Debug logs a debug message in the debug interface when logger level >= LevelDebug.
 func (l *Logger) Debug(message string) {
-	if l.getLevel() < LevelDebug {
+	if l.level < LevelDebug {
 		return
 	}
 	l.log(l.debug, nameDebug, colorLightBlue, message)
@@ -201,7 +167,7 @@ func (l *Logger) Debug(message string) {
 // Debug logs a debug message in the debug interface when logger level >= LevelDebug.
 // Arguments are handled in the manner of fmt.Printf.
 func (l *Logger) Debugf(format string, v ...interface{}) {
-	if l.getLevel() < LevelDebug {
+	if l.level < LevelDebug {
 		return
 	}
 	l.log(l.debug, nameDebug, colorLightBlue, fmt.Sprintf(format, v...))
@@ -209,25 +175,13 @@ func (l *Logger) Debugf(format string, v ...interface{}) {
 
 // log is the internal function for logging messages
 func (l *Logger) log(w io.Writer, levelName, levelColor, message string) {
-	formattedMsg := l.getFormat().format(fmt.Sprintf("%s%s%s", levelColor, levelName, colorDefault), message)
-
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
+	if l.color {
+		levelName = levelColor + levelName + colorDefault
+	}
+	formattedMsg := l.format.format(levelName, message)
 
 	_, err := io.WriteString(w, formattedMsg)
 	if err != nil {
 		panic(err)
 	}
-}
-
-func (l *Logger) getLevel() int {
-	l.mutex.RLock()
-	defer l.mutex.RUnlock()
-	return l.level
-}
-
-func (l *Logger) getFormat() *formatter {
-	l.mutex.RLock()
-	defer l.mutex.RUnlock()
-	return l.format
 }
