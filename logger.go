@@ -79,6 +79,11 @@ func NewLoggerWriters(debug, info, error, critical io.Writer) *Logger {
 		critical = l.critical
 	}
 
+	l.debug = debug
+	l.info = info
+	l.error = error
+	l.critical = critical
+
 	return l
 }
 

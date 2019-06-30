@@ -73,7 +73,7 @@ func TestLogger_Level(t *testing.T) {
 	lt := NewLoggerTest()
 	lt.Log.Color = false
 	lt.Log.Formatter = func(levelName, msg string) string {
-		return levelName + " " + "msg"
+		return levelName + " " + msg
 	}
 
 	// Debug
