@@ -1,7 +1,7 @@
 # logolang
 Package logolang is a simple and thread-safe library for logging operations.
 
-Example:
+## Example
 ```go
 package main
 
@@ -18,7 +18,8 @@ func main() {
 }
 ```
 
-Output:
+Output
+
 ![Example of logolang](https://i.nth.sh/media/4mM4w8KV46/xdiR4R4tiz.png)
 
 
@@ -36,6 +37,23 @@ defined level. This levels are:
 * 4: debug
 
 
+### Formatter
+
+The standard behaviour of logolang is to print log message with the following format:
+* [YYYY-MM-DD hh:mm:ss.nssssssss] LEVEL: MESSAGE
+
+You may not want this, so you can set a custom formatter function. This function will receive the
+name of the level logged (levelName) and the message to display (msg). This function will return
+just a string with the formatted text.
+
+
+### Colors
+
+The standard behaviour of logolang is to print log messages in the terminal coloring the level name
+of the logger. This uses special characters that the terminal will understand as colors, but text
+files and other things could not identify it as that. For that reason, you can disable it.
+
+
 ### Writers
 
 If you want to use a different writers for logging operations, it MUST be safe for concurrent use.
@@ -44,32 +62,6 @@ sure if your writer is safe or not, you should probably wrap it.
 
 The custom writers MUST also be reliable for writing, because a logging operation that founds an
 error while writing will end up in panic.
-
-
-### Format
-
-You can set the way your message is logged by setting a custom format. The format is defined by a
-string where the following sequences are given the following values:
-* %YYYY%    = current year
-* %MM%      = current month
-* %DD%      = current day of the month
-* %hh%      = current hour
-* %mm%      = current minute
-* %ss%      = current second
-* %ns%      = current nanosecond
-* %LEVEL%   = level name (DEBUG, INFO, ERROR or CRITICAL)
-* %MESSAGE% = message logged
-
-The default format is:
-* DefaultFormat  = "[%YYYY%-%MM%-%DD% %hh%:%mm%:%ss%] %LEVEL%: %MESSAGE%"
-
-
-### Colors
-
-The standard behaviour of logolang is to print log messages in the terminal coloring the level name
-of the logger. This uses special characters that the terminal will understand as colors, but text
-files and other things could not identify it as that. For that reason, you can disable color when
-using NewLogger.
 
 
 You can read the entire documentation in https://godoc.org/github.com/Miguel-Dorta/logolang
