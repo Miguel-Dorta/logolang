@@ -8,10 +8,8 @@ package main
 import "github.com/Miguel-Dorta/logolang"
 
 func main() {
-	log, err := logolang.NewLogger(true, "", logolang.LevelDebug, nil, nil, nil, nil)
-	if err != nil {
-		panic(err)
-	}
+	log := logolang.NewLogger()
+	log.Level = logolang.LevelDebug
 	
 	log.Debug("debug test")
 	log.Info("info test")
@@ -21,7 +19,7 @@ func main() {
 ```
 
 Output:
-![Example of logolang](https://i.nth.sh/media/4mM4w8KV46/nU17GQ50q1.png)
+![Example of logolang](https://i.nth.sh/media/4mM4w8KV46/xdiR4R4tiz.png)
 
 
 ## Documentation
