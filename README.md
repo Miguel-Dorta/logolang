@@ -5,12 +5,13 @@ Package logolang is a simple and thread-safe library for logging operations.
 ```go
 package main
 
-import "github.com/Miguel-Dorta/logolang"
+import (
+	log "github.com/Miguel-Dorta/logolang"
+)
 
 func main() {
-	log := logolang.NewLogger()
-	log.Level = logolang.LevelDebug
-	
+	log.DefaultLogger.Level = log.LevelDebug
+
 	log.Debug("debug test")
 	log.Info("info test")
 	log.Error("error test")

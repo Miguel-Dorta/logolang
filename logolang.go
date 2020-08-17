@@ -105,3 +105,47 @@ func (l *Logger) Infof(format string, v ...interface{}) {
 	}
 	l.log(l.info, nameInfo, colorDefault, fmt.Sprintf(format, v...))
 }
+
+// Critical logs a critical message using DefaultLogger when DefaultLogger.Level >= LevelCritical.
+func Critical(message string) {
+	DefaultLogger.Critical(message)
+}
+
+// Criticalf logs a critical message using DefaultLogger when DefaultLogger.Level >= LevelCritical.
+// Arguments are handled in the manner of fmt.Printf.
+func Criticalf(format string, v ...interface{}) {
+	DefaultLogger.Criticalf(format, v...)
+}
+
+// Debug logs a debug message using DefaultLogger when DefaultLogger.Level >= LevelDebug.
+func Debug(message string) {
+	DefaultLogger.Debug(message)
+}
+
+// Debug logs a debug message using DefaultLogger when DefaultLogger.Level >= LevelDebug.
+// Arguments are handled in the manner of fmt.Printf.
+func Debugf(format string, v ...interface{}) {
+	DefaultLogger.Debugf(format, v...)
+}
+
+// Error logs an error message using DefaultLogger when DefaultLogger.Level >= LevelError.
+func Error(message string) {
+	DefaultLogger.Error(message)
+}
+
+// Error logs an error message using DefaultLogger when DefaultLogger.Level >= LevelError.
+// Arguments are handled in the manner of fmt.Printf.
+func Errorf(format string, v ...interface{}) {
+	DefaultLogger.Errorf(format, v...)
+}
+
+// Info logs an info message using DefaultLogger when DefaultLogger.Level >= LevelInfo.
+func Info(message string) {
+	DefaultLogger.Info(message)
+}
+
+// Info logs an info message using DefaultLogger when DefaultLogger.Level >= LevelInfo.
+// Arguments are handled in the manner of fmt.Printf.
+func Infof(format string, v ...interface{}) {
+	DefaultLogger.Infof(format, v...)
+}

@@ -7,17 +7,23 @@ import (
 	"time"
 )
 
-// DefaultFormatter is the default function for formatting the logging messages.
-// It will format them as "[YYYY-MM-DD hh:mm:ss.nssssssss] LEVEL: MESSAGE"
-var DefaultFormatter = func(levelName, msg string) string {
-	now := time.Now()
-	return fmt.Sprintf(
-		"[%04d-%02d-%02d %02d:%02d:%02d.%09d] %s: %s",
-		now.Year(), now.Month(), now.Day(),
-		now.Hour(), now.Minute(), now.Second(), now.Nanosecond(),
-		levelName, msg,
-	)
-}
+var (
+	// DefaultFormatter is the default function for formatting the logging messages.
+	// It will format them as "[YYYY-MM-DD hh:mm:ss.nssssssss] LEVEL: MESSAGE"
+	DefaultFormatter = func(levelName, msg string) string {
+		now := time.Now()
+		return fmt.Sprintf(
+			"[%04d-%02d-%02d %02d:%02d:%02d.%09d] %s: %s",
+			now.Year(), now.Month(), now.Day(),
+			now.Hour(), now.Minute(), now.Second(), now.Nanosecond(),
+			levelName, msg,
+		)
+	}
+
+	// DefaultLogger is the default logger of the package, it's the one used when the package logging functions
+	// (are used.
+	DefaultLogger = NewLogger()
+)
 
 // Logger is the type used by logolang to perform logging operations.
 // This type is NOT thread-safe. Do not modify its content concurrently.
@@ -86,4 +92,3 @@ func NewLoggerWriters(debug, info, error, critical io.Writer) *Logger {
 
 	return l
 }
-
